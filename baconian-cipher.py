@@ -19,35 +19,75 @@ def encrypt(message):
     return cipher
 
 
-def message_cleanup(message):
-    message_simbols = list(message)
-    clean_message = ''
-
-    for s in message_simbols:
-        if s.isalpha():
-            clean_message += s
-
-    return clean_message
-
-
-def decrypt(message):
-    decipher = ''
+def decrypt(cipher):
+    message = ''
     i = 0
 
-    while True:
-        if i < len(message) - 4:
-            substr = message[i:i + 5]
-            if substr[0] != ' ':
-                decipher += list(lookup.keys())[list(lookup.values()).index(substr)]
-                i += 5
-
-            else:
-                decipher += ' '
-                i += 1
+    while i < len(cipher) - 4:
+        substr = cipher[i:i + 5]
+        if substr[0] != ' ':
+            message += list(lookup.keys())[list(lookup.values()).index(substr)]
+            i += 5
         else:
-            break
+            message += ' '
+            i += 1
 
-    return decipher
+    return message
+
+
+def hide_cipher(text, encrypted_message):
+    if letters_count(text) >= letters_count(encrypted_message) + 5:
+
+        text_symbols = list(text)
+        encr_message_symbols = list(encrypted_message)
+
+        iter_encr_mes = 0
+        iter_text = 0
+
+        while iter_encr_mes < len(encr_message_symbols):
+
+            if text_symbols[iter_text].isalpha():
+                if encr_message_symbols[iter_encr_mes].isalpha():
+                    if encr_message_symbols[iter_encr_mes].lower() == 'a':
+                        text_symbols[iter_text] = text_symbols[iter_text].lower()
+                    else:
+                        text_symbols[iter_text] = text_symbols[iter_text].upper()
+                iter_encr_mes += 1
+
+            iter_text += 1
+
+        number_of_last_letters = 0
+
+        while number_of_last_letters != 5:
+            if text_symbols[iter_text].isalpha():
+                text_symbols[iter_text] = text_symbols[iter_text].upper()
+                number_of_last_letters += 1
+
+            iter_text += 1
+
+        return ''.join(text_symbols)
+    else:
+        return None
+
+
+def decrypt_message(text):
+    end_of_message = 0
+    encrypted_message = ""
+    text_symbols = list(text)
+    index = 0
+
+    while end_of_message != 5:
+        if text_symbols[index].isalpha():
+            if text_symbols[index].islower():
+                encrypted_message += "a"
+                end_of_message = 0
+            elif text_symbols[index].isupper():
+                encrypted_message += "b"
+                end_of_message += 1
+        index += 1
+
+    print(encrypted_message)
+    return decrypt(encrypted_message)
 
 
 def letters_count(text):
@@ -60,60 +100,15 @@ def letters_count(text):
     return count
 
 
-def hide_cipher(data, encrypted_message):
-    if letters_count(data) >= letters_count(encrypted_message) + 5:
+def message_cleanup(message):
+    message_simbols = list(message)
+    clean_message = ''
 
-        list_data = list(data)
-        list_encrypted_message = list(encrypted_message)
+    for s in message_simbols:
+        if s.isalpha():
+            clean_message += s
 
-        iter_encr_mes = 0
-        iter_data_from_file = 0
-
-        while iter_encr_mes <= len(list_encrypted_message) - 1:
-
-            if list_data[iter_data_from_file].isalpha():
-                if list_encrypted_message[iter_encr_mes].isalpha():
-                    if list_encrypted_message[iter_encr_mes].lower() == 'a':
-                        list_data[iter_data_from_file] = list_data[iter_data_from_file].lower()
-                    else:
-                        list_data[iter_data_from_file] = list_data[iter_data_from_file].upper()
-                iter_encr_mes += 1
-
-            iter_data_from_file += 1
-
-        number_of_last_letters = 0
-
-        while number_of_last_letters != 5:
-            if list_data[iter_data_from_file].isalpha():
-                list_data[iter_data_from_file] = list_data[iter_data_from_file].upper()
-                number_of_last_letters += 1
-
-            iter_data_from_file += 1
-
-        return ''.join(list_data)
-    else:
-        return None
-
-
-def decrypt_message(data):
-    end_of_message = 0
-    encrypted_message = ""
-    list_data = list(data)
-    index = 0
-
-    while end_of_message != 5:
-        if list_data[index].isalpha():
-            if list_data[index].islower():
-                encrypted_message += "a"
-                end_of_message = 0
-            else:
-                if list_data[index].isupper():
-                    encrypted_message += "b"
-                    end_of_message += 1
-        index += 1
-
-    print(encrypted_message)
-    return decrypt(encrypted_message)
+    return clean_message
 
 
 def main():
@@ -122,61 +117,61 @@ def main():
         print("2) Decrypt")
         print("3) Exit\n")
         movement = input("Enter type of operation: ")
+
         if movement == "3":
             break
+        elif movement == "1":
+            message = message_cleanup(input("\nEnter text that will be encrypted: "))
+
+            path = input("\nEnter the path to txt files for encrypting (Such as ./input): ")
+            if not path.endswith("/"):
+                path += "/"
+            arr = get_list_files(path)
+
+            if len(arr) == 0:
+                print("This path: " + path + " is empty or does not exist!")
+                break
+
+            print("\n")
+            for el in arr:
+                print(str(arr.index(el)) + ") " + el)
+
+            index = int(input("\nSelect number of txt file: "))
+
+            text_file = path + arr[index]
+            with open(text_file, 'r') as myfile:
+                text = myfile.read()
+                encrypted_data = hide_cipher(text, encrypt(message.upper()))
+
+                if not (encrypted_data is None):
+                    if not os.path.exists("./output/"):
+                        os.makedirs("./output/")
+
+                    folder_of_output_file = "./output/" + arr[index]
+                    with open(folder_of_output_file, 'w') as newFile:
+                        newFile.write(encrypted_data)
+
+                    print("\n\nSuccessful encrypt\n")
+                    print("")
+                else:
+                    print("\nSomething wrong\n")
         else:
-            if movement == "1":
-                message = message_cleanup(input("\nEnter text that will be encrypted: "))
+            arr = os.listdir("./output/")
+            index = 0
 
-                path = input("\nEnter the path to txt files for encrypting: ")
-                if not path.endswith("/"):
-                    path += "/"
-                arr = get_list_files(path)
+            print("\n")
+            for el in arr:
+                print(str(index) + ") " + el)
+                index += 1
 
-                if len(arr) == 0:
-                    print("This path: " + path + " is empty or does not exist!")
-                    break
+            index = int(input("\nSelect number of txt file: "))
 
-                print("\n")
-                for el in arr:
-                    print(str(arr.index(el)) + ") " + el)
+            text_file = "./output/" + arr[index]
+            with open(text_file, 'r') as myfile:
+                text = myfile.read()
+                decrypted_data = decrypt_message(text)
 
-                index = int(input("\nSelect number of txt file: "))
-
-                text_file = path + arr[index]
-                with open(text_file, 'r') as myfile:
-                    data = myfile.read()
-                    encrypted_data = hide_cipher(data, encrypt(message.upper()))
-
-                    if not (encrypted_data is None):
-                        if not os.path.exists("./output/"):
-                            os.makedirs("./output/")
-
-                        folder_of_output_file = "./output/" + arr[index]
-                        with open(folder_of_output_file, 'w') as newFile:
-                            newFile.write(encrypted_data)
-
-                        print("\n\nSuccessful encrypt\n")
-                        print("")
-                    else:
-                        print("\nSomething wrong\n")
-            else:
-                arr = os.listdir("./output/")
-                index = 0
-
-                print("\n")
-                for el in arr:
-                    print(str(index) + ") " + el)
-                    index += 1
-
-                index = int(input("\nSelect number of txt file: "))
-
-                text_file = "./output/" + arr[index]
-                with open(text_file, 'r') as myfile:
-                    data = myfile.read()
-                    decrypted_data = decrypt_message(data)
-
-                    print("Decrypted message: \n" + decrypted_data)
+                print("Decrypted message: \n" + decrypted_data)
 
 
 def get_list_files(dir):
